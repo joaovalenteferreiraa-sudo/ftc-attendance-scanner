@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>FTC Attendance Scanner</title>
+  <script src="https://unpkg.com/html5-qrcode"></script>
+</head>
+
+<body>
+  <h2>FTC Attendance Scanner</h2>
+
+  <input id="password" type="password" placeholder="Teacher password">
+  <button onclick="startScanner()">START SCANNING</button>
+
+  <p id="status"></p>
+  <div id="reader" style="width:100%;max-width:500px;"></div>
+
+<script>
+const SCRIPT_URL = "PASTE-YOUR-APPS-SCRIPT-URL-HERE";
+let token = "";
+
+function startScanner() {
+  const password = document.getElementById("password").value;
+
+  if (!password) {
+    document.getElementById("status").innerText = "Enter password.";
+    return;
+  }
+
+  document.getElementById("status").innerText = "Authorizing...";
+
+  const callback = "auth" + Date.now();
+
+  window[callback] = function(data) {
+    delete window[callback];
+
+    if (!data.success) {
+      document.getElementById("status").innerText = "Wrong password.";
+      return;
+    }
+
+    token = data.token;
+    document.getElementById("status").innerText = "🔓 Authorized";
+
+    const scanner = new Html5Qrcode("reader");
+
+    scanner.start(
+      { facingMode: "environment" },
+      { fps: 10, qrbox: 250 },
+      text => handleQR(text, scanner)
+    ).catch(err => {
+      document.getElementById("status").innerText =
+        "Camera error: " + err;
+    });
+  };
+
+  const script = document.createElement("script");
+  script.src =
+    SCRIPT_URL +
+    "?action=authorize&password=" +
+    encodeURIComponent(password) +
+    "&callback=" + callback;
+
+  document.body.appendChild(script);
+}
+
+function handleQR(text, scanner) {
+  try {
+    const url = new URL(text);
+    const studentId = url.searchParams.get("student");
+
+    if (!studentId) {
+      document.getElementById("status").innerText =
+        "Invalid student QR.";
+      return;
+    }
+
+    scanner.pause(true);
+
+    const callback = "record" + Date.now();
+
+    window[callback] = function(data) {
+      delete window[callback];
+
+      document.getElementById("status").innerText =
+        data.message || "Attendance processed.";
+
+      setTimeout(() => scanner.resume(), 1500);
+    };
+
+    const script = document.createElement("script");
+    script.src =
+      SCRIPT_URL +
+      "?action=record&student=" +
+      encodeURIComponent(studentId) +
+      "&token=" +
+      encodeURIComponent(token) +
+      "&callback=" + callback;
+
+    document.body.appendChild(script);
+
+  } catch (e) {
+    document.getElementById("status").innerText =
+      "Invalid QR.";
+  }
+}
+</script>
+
+</body>
+</html>
