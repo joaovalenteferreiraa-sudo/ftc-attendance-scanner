@@ -16,7 +16,7 @@
   <div id="reader" style="width:100%;max-width:500px;"></div>
 
 <script>
-const SCRIPT_URL = "PASTE-YOUR-APPS-SCRIPT-URL-HERE";
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxWnZhAE-AhC22nD0ESu0RA2bY_I0FzI2x6Pizd9se8A9TJ6H6oTT6lmEmDIsdtQfSj/exec";
 let token = "";
 
 function startScanner() {
@@ -55,6 +55,7 @@ function startScanner() {
   };
 
   const script = document.createElement("script");
+
   script.src =
     SCRIPT_URL +
     "?action=authorize&password=" +
@@ -89,6 +90,7 @@ function handleQR(text, scanner) {
     };
 
     const script = document.createElement("script");
+
     script.src =
       SCRIPT_URL +
       "?action=record&student=" +
